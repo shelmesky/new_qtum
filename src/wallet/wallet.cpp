@@ -1797,8 +1797,10 @@ void CWalletTx::GetAccountAmounts(const string& strAccount, CAmount& nReceived,
             if (pwallet->mapAddressBook.count(r.destination))
             {
                 map<CTxDestination, CAddressBookData>::const_iterator mi = pwallet->mapAddressBook.find(r.destination);
-                if (mi != pwallet->mapAddressBook.end() && (*mi).second.name == strAccount)
+                //if (mi != pwallet->mapAddressBook.end() && (*mi).second.name == strAccount)
+				if (mi != pwallet->mapAddressBook.end() && CBitcoinAddress((*mi).first).ToString() == strAccount) {
                     nReceived += r.amount;
+				}
             }
             else if (strAccount.empty())
             {
@@ -3932,6 +3934,11 @@ CAmount CWallet::GetAccountBalance(CWalletDB& walletdb, const std::string& strAc
         const CWalletTx& wtx = (*it).second;
         if (!CheckFinalTx(wtx) || wtx.GetBlocksToMaturity() > 0 || wtx.GetDepthInMainChain() < 0)
             continue;
+		
+		// 剔除未确认的交易
+		if (!wtx.IsTrusted()) {
+			continue;
+		}
 
         CAmount nReceived, nSent, nFee;
         wtx.GetAccountAmounts(strAccount, nReceived, nSent, nFee, filter);
