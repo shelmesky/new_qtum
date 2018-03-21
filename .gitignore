@@ -122,3 +122,5 @@ contrib/devtools/split-debug.sh
 .idea/
 CMakeLists.txt
 cmake-build-debug/
+
+src/src/cpp-ethereum/*

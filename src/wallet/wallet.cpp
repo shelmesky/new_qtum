@@ -306,6 +306,41 @@ CPubKey CWallet::GenerateNewKey()
     return pubkey;
 }
 
+CKey CWallet::JSONGenerateNewKey()
+{
+    AssertLockHeld(cs_wallet); // mapKeyMetadata
+    bool fCompressed = CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.6.0 wallets
+
+    CKey secret;
+
+    // Create new metadata
+    int64_t nCreationTime = GetTime();
+    CKeyMetadata metadata(nCreationTime);
+
+    // use HD key derivation if HD was enabled during wallet creation
+    if (IsHDEnabled()) {
+        DeriveNewChildKey(metadata, secret);
+    } else {
+        secret.MakeNewKey(fCompressed);
+    }
+
+    // Compressed public keys were introduced in version 0.6.0
+    if (fCompressed)
+        SetMinVersion(FEATURE_COMPRPUBKEY);
+
+    CPubKey pubkey = secret.GetPubKey();
+    assert(secret.VerifyPubKey(pubkey));
+
+    mapKeyMetadata[pubkey.GetID()] = metadata;
+    UpdateTimeFirstKey(nCreationTime);
+
+    if (!AddKeyPubKey(secret, pubkey))
+        throw std::runtime_error(std::string(__func__) + ": AddKey failed");
+    
+	//return pubkey;
+	return secret;
+}
+
 void CWallet::DeriveNewChildKey(CKeyMetadata& metadata, CKey& secret)
 {
     // for now we use a fixed keypath scheme of m/88'/0'/k
@@ -3706,6 +3741,26 @@ bool CWallet::GetKeyFromPool(CPubKey& result)
         }
         KeepKey(nIndex);
         result = keypool.vchPubKey;
+    }
+    return true;
+}
+
+bool CWallet::JSONGetKeyFromPool(CKey& result)
+{
+    int64_t nIndex = 0;
+    CKeyPool keypool;
+    {
+        LOCK(cs_wallet);
+        ReserveKeyFromKeyPool(nIndex, keypool);
+		nIndex = -1;
+        if (nIndex == -1)
+        {
+            if (IsLocked()) return false;
+            result = JSONGenerateNewKey();
+            return true;
+        }
+        KeepKey(nIndex);
+        //result = keypool.vchPubKey;
     }
     return true;
 }

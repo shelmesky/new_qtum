@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010 Satoshi Nakamoto
+// Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -138,14 +138,22 @@ UniValue getnewaddress(const JSONRPCRequest& request)
         pwalletMain->TopUpKeyPool();
 
     // Generate a new key that is added to wallet
-    CPubKey newKey;
-    if (!pwalletMain->GetKeyFromPool(newKey))
+    CKey newKey;
+	CPubKey pubKey;
+	CPrivKey privKey;
+    if (!pwalletMain->JSONGetKeyFromPool(newKey))
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
-    CKeyID keyID = newKey.GetID();
+    pubKey = newKey.GetPubKey();
+    privKey = newKey.GetPrivKey();
+    CKeyID keyID = pubKey.GetID();
 
     pwalletMain->SetAddressBook(keyID, strAccount, "receive");
-
-    return CBitcoinAddress(keyID).ToString();
+	
+	UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("address", CBitcoinAddress(keyID).ToString()));
+	ret.push_back(Pair("private_key", CBitcoinSecret(newKey).ToString()));
+	
+	return ret;
 }
 
 
