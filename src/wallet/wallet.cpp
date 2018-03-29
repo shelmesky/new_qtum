@@ -2058,8 +2058,7 @@ CAmount CWalletTx::JSONGetAvailableCredit(bool fUseCache, std::string& account) 
         if (!pwallet->IsSpent(hashTx, i))
         {
             const CTxOut &txout = tx->vout[i];
-            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
-			
+            
 			bool isMyAddress = false;
 			CTxDestination address;
 			ExtractDestination(txout.scriptPubKey, address);
@@ -2067,6 +2066,8 @@ CAmount CWalletTx::JSONGetAvailableCredit(bool fUseCache, std::string& account) 
 			if(!isMyAddress) {
 				continue;
 			}
+			
+			nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
 			
             if (!MoneyRange(nCredit))
                 throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
