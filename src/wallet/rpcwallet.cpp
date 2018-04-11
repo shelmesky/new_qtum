@@ -1175,6 +1175,9 @@ UniValue getbalance(const JSONRPCRequest& request)
 
     if (request.params.size() == 0)
         return  ValueFromAmount(pwalletMain->GetBalance());
+	
+	string strAccount = AccountFromValue(request.params[0]);
+	return  ValueFromAmount(pwalletMain->JSONGetBalance(strAccount));
 
     int nMinDepth = 1;
     if (request.params.size() > 1)
@@ -1214,8 +1217,6 @@ UniValue getbalance(const JSONRPCRequest& request)
         }
         return  ValueFromAmount(nBalance);
     }
-
-    string strAccount = AccountFromValue(request.params[0]);
 
     CAmount nBalance = pwalletMain->GetAccountBalance(strAccount, nMinDepth, filter);
 

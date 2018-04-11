@@ -1762,8 +1762,10 @@ void CWalletTx::GetAccountAmounts(const string& strAccount, CAmount& nReceived,
             if (pwallet->mapAddressBook.count(r.destination))
             {
                 map<CTxDestination, CAddressBookData>::const_iterator mi = pwallet->mapAddressBook.find(r.destination);
-                if (mi != pwallet->mapAddressBook.end() && (*mi).second.name == strAccount)
+                //if (mi != pwallet->mapAddressBook.end() && (*mi).second.name == strAccount)
+				if (mi != pwallet->mapAddressBook.end() && CBitcoinAddress((*mi).first).ToString() == strAccount) {
                     nReceived += r.amount;
+				}
             }
             else if (strAccount.empty())
             {
@@ -2002,6 +2004,46 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
     return nCredit;
 }
 
+CAmount CWalletTx::JSONGetAvailableCredit(bool fUseCache, std::string& account) const
+{
+    if (pwallet == 0)
+        return 0;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if ((IsCoinBase() || IsCoinStake()) && GetBlocksToMaturity() > 0)
+        return 0;
+
+    if (fUseCache && fAvailableCreditCached)
+        return nAvailableCreditCached;
+
+    CAmount nCredit = 0;
+    uint256 hashTx = GetHash();
+    for (unsigned int i = 0; i < tx->vout.size(); i++)
+    {
+        if (!pwallet->IsSpent(hashTx, i))
+        {
+            const CTxOut &txout = tx->vout[i];
+            
+			bool isMyAddress = false;
+			CTxDestination address;
+			ExtractDestination(txout.scriptPubKey, address);
+			isMyAddress = CBitcoinAddress(address).ToString() == account;
+			if(!isMyAddress) {
+				continue;
+			}
+			
+			nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+			
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error("CWalletTx::GetAvailableCredit() : value out of range");
+        }
+    }
+
+    nAvailableCreditCached = nCredit;
+    fAvailableCreditCached = true;
+    return nCredit;
+}
+
 CAmount CWalletTx::GetImmatureWatchOnlyCredit(const bool& fUseCache) const
 {
     if (IsCoinBase() && GetBlocksToMaturity() > 0 && IsInMainChain())
@@ -2171,6 +2213,22 @@ CAmount CWallet::GetBalance() const
             const CWalletTx* pcoin = &(*it).second;
             if (pcoin->IsTrusted())
                 nTotal += pcoin->GetAvailableCredit();
+        }
+    }
+
+    return nTotal;
+}
+
+CAmount CWallet::JSONGetBalance(std::string& strAccount) const
+{
+    CAmount nTotal = 0;
+    {
+        LOCK2(cs_main, cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (pcoin->IsTrusted())
+                nTotal += pcoin->JSONGetAvailableCredit(false, strAccount);
         }
     }
 
@@ -3877,6 +3935,11 @@ CAmount CWallet::GetAccountBalance(CWalletDB& walletdb, const std::string& strAc
         const CWalletTx& wtx = (*it).second;
         if (!CheckFinalTx(wtx) || wtx.GetBlocksToMaturity() > 0 || wtx.GetDepthInMainChain() < 0)
             continue;
+		
+		// 剔除未确认的交易
+		if (!wtx.IsTrusted()) {
+			continue;
+		}
 
         CAmount nReceived, nSent, nFee;
         wtx.GetAccountAmounts(strAccount, nReceived, nSent, nFee, filter);
@@ -3887,7 +3950,7 @@ CAmount CWallet::GetAccountBalance(CWalletDB& walletdb, const std::string& strAc
     }
 
     // Tally internal accounting entries
-    nBalance += walletdb.GetAccountCreditDebit(strAccount);
+    //nBalance += walletdb.GetAccountCreditDebit(strAccount);
 
     return nBalance;
 }
