@@ -874,12 +874,13 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
                 strprintf("%d", nSigOpsCost));
 
         CAmount mempoolRejectFee = pool.GetMinFee(GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(nSize);
+		
+		std::cout << "Check insufficient priority step 0: " << GetBoolArg("-relaypriority", DEFAULT_RELAYPRIORITY) << std::endl;
+		std::cout << "Check insufficient priority stpe 1: " << " [nModifiedFees:" << nModifiedFees << "] [nSize:" << nSize << "] [::minRelayTxFee.GetFee(nSize):" << ::minRelayTxFee.GetFee(nSize) << "]" << std::endl;
+		std::cout << "Check insufficient priority step 2: " << "[!AllowFree(entry.GetPriority(chainActive.Height() + 1)):" << !AllowFree(entry.GetPriority(chainActive.Height() + 1)) << "]" << std::endl;
         if (mempoolRejectFee > 0 && nModifiedFees < mempoolRejectFee) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "mempool min fee not met", false, strprintf("%d < %d", nFees, mempoolRejectFee));
         } else if (GetBoolArg("-relaypriority", DEFAULT_RELAYPRIORITY) && nModifiedFees < ::minRelayTxFee.GetFee(nSize) && !AllowFree(entry.GetPriority(chainActive.Height() + 1))) {
-			std::cout << "Check insufficient priority step 0: " << GetBoolArg("-relaypriority", DEFAULT_RELAYPRIORITY) << std::endl;
-			std::cout << "Check insufficient priority stpe 1: " << " [nModifiedFees:" << nModifiedFees << "] [nSize:" << nSize << "] [::minRelayTxFee.GetFee(nSize):" << ::minRelayTxFee.GetFee(nSize) << "]" << std::endl;
-			std::cout << "Check insufficient priority step 2: " << " [!AllowFree(entry.GetPriority(chainActive.Height() + 1)):" << !AllowFree(entry.GetPriority(chainActive.Height() + 1)) << "]" <<  std::endl;
 			
             // Require that free transactions have sufficient priority to be mined in the next block.
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient priority");
