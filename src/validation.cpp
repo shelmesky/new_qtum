@@ -888,7 +888,7 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
         // Continuously rate-limit free (really, very-low-fee) transactions
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
-		std::cout << "Check rate-limit free transaction step 0: " << " [fLimitFree:" << fLimitFree << "] [nModifiedFees:" << nModifiedFees << "] [::minRelayTxFee.GetFee(nSize):" << ::minRelayTxFee.GetFee(nSize) << "] [nSize:" << nSize << "]" << std::endl;
+		std::cout << "Check rate-limit free transaction step 0: " << " [fLimitFree:" << fLimitFree << "] [nFees:" << nFees << "] [nModifiedFees:" << nModifiedFees << "] [::minRelayTxFee.GetFee(nSize):" << ::minRelayTxFee.GetFee(nSize) << "] [nSize:" << nSize << "]" << std::endl;
         if (fLimitFree && nModifiedFees < ::minRelayTxFee.GetFee(nSize))
         {
             static CCriticalSection csFreeLimiter;
