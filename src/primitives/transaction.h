@@ -205,6 +205,7 @@ public:
 
     bool IsDust(const CFeeRate &minRelayTxFee) const
     {
+		std::cout << "IsDust: " << nValue << " " << GetDustThreshold(minRelayTxFee) << std::endl; 
         return (nValue < GetDustThreshold(minRelayTxFee) && !this->scriptPubKey.HasOpCreate() && !this->scriptPubKey.HasOpCall());
     }
 

@@ -39,6 +39,7 @@ inline bool AllowFree(double dPriority)
 {
     // Large (in bytes) low-priority (new, small-coin) transactions
     // need a fee.
+	std::cout << "Check insufficient priority stpe 3: " << dPriority << " " << AllowFreeThreshold() << std::endl;
     return dPriority > AllowFreeThreshold();
 }
 
