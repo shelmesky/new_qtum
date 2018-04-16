@@ -878,8 +878,8 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "mempool min fee not met", false, strprintf("%d < %d", nFees, mempoolRejectFee));
         } else if (GetBoolArg("-relaypriority", DEFAULT_RELAYPRIORITY) && nModifiedFees < ::minRelayTxFee.GetFee(nSize) && !AllowFree(entry.GetPriority(chainActive.Height() + 1))) {
 			std::cout << "Check insufficient priority step 0: " << GetBoolArg("-relaypriority", DEFAULT_RELAYPRIORITY) << std::endl;
-			std::cout << "Check insufficient priority stpe 1: " << nModifiedFees << " " << ::minRelayTxFee.GetFee(nSize) << std::endl;
-			std::cout << "Check insufficient priority step 2: " << !AllowFree(entry.GetPriority(chainActive.Height() + 1)) << std::endl;
+			std::cout << "Check insufficient priority stpe 1: " << " [nModifiedFees:" << nModifiedFees << "] [nSize:" << nSize << "] [::minRelayTxFee.GetFee(nSize):" << ::minRelayTxFee.GetFee(nSize) << "]" << std::endl;
+			std::cout << "Check insufficient priority step 2: " << " [!AllowFree(entry.GetPriority(chainActive.Height() + 1)):" << !AllowFree(entry.GetPriority(chainActive.Height() + 1)) << "]" <<  std::endl;
 			
             // Require that free transactions have sufficient priority to be mined in the next block.
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient priority");
@@ -888,7 +888,7 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
         // Continuously rate-limit free (really, very-low-fee) transactions
         // This mitigates 'penny-flooding' -- sending thousands of free transactions just to
         // be annoying or make others' transactions take longer to confirm.
-		std::count << "Check rate-limit free transaction step 0: " << fLimitFree << " " << nModifiedFees << " " << ::minRelayTxFee.GetFee(nSize) << " " << nSize << std::endl;
+		std::cout << "Check rate-limit free transaction step 0: " << " [fLimitFree:" << fLimitFree << "] [nModifiedFees:" << nModifiedFees << "] [::minRelayTxFee.GetFee(nSize):" << ::minRelayTxFee.GetFee(nSize) << "] [nSize:" << nSize << "]" << std::endl;
         if (fLimitFree && nModifiedFees < ::minRelayTxFee.GetFee(nSize))
         {
             static CCriticalSection csFreeLimiter;
@@ -903,7 +903,7 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
             nLastTime = nNow;
             // -limitfreerelay unit is thousand-bytes-per-minute
             // At default rate it would take over a month to fill 1GB
-			std::count << "Check rate-limit free transaction step 1: " << dFreeCount << " " nSize << " " << GetArg("-limitfreerelay", DEFAULT_LIMITFREERELAY) * 10 * 1000 << std::endl;
+			std::cout << "Check rate-limit free transaction step 1: " << " [dFreeCount:" << dFreeCount << "] [nSize:" << nSize << "] [GetArg('-limitfreerelay', DEFAULT_LIMITFREERELAY) * 10 * 1000:" << GetArg("-limitfreerelay", DEFAULT_LIMITFREERELAY) * 10 * 1000 << "]" <<  std::endl;
             if (dFreeCount + nSize >= GetArg("-limitfreerelay", DEFAULT_LIMITFREERELAY) * 10 * 1000) {
                 return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "rate limited free transaction");
 			}
