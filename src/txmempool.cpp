@@ -55,6 +55,9 @@ CTxMemPoolEntry::GetPriority(unsigned int currentHeight) const
 {
     double deltaPriority = ((double)(currentHeight-entryHeight)*inChainInputValue)/nModSize;
     double dResult = entryPriority + deltaPriority;
+	std::cout << "Check insufficient priority step 2: " << " [currentHerght:" << currentHeight << "] [entryHeight:" << entryHeight << "] [inChainInputValue:" 
+			  << inChainInputValue << "] [nModSize:" << nModSize << "]" << std::endl;
+	std::cout << "Check insufficient priority step 2.1: " << " [entryPriority:" << entryPriority << "] [deltaPriority:" << deltaPriority << "]" << std::endl;
     if (dResult < 0) // This should only happen if it was called with a height below entry height
         dResult = 0;
     return dResult;
